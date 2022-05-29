@@ -1,2 +1,2 @@
 # kaimono
-A site generator for my kaimono
+A site generator for my shopping list

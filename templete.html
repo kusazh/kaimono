@@ -1,0 +1,83 @@
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <meta charset="UTF-8" />
+    <title>kaimono</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="manifest" href="site.webmanifest">
+    <style type="text/css">
+        body {
+            margin: 200px auto;
+            padding: 20px;
+            font-family: Futura, Sans-serif;
+            width: 1643px;
+        }
+
+        .main {
+            margin-bottom: -1px;
+        }
+
+        .item {
+            border: 1px solid;
+            width: 400px;
+            padding-top: 400px;
+            float: left;
+            margin: 0px -1px -1px 0px;
+            position: relative;
+        }
+
+        .item img {
+            max-width: 50%;
+            max-height: 50%;
+            position: absolute;
+            margin: auto;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+        }
+
+        .desc {
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+            line-height: 150%;
+        }
+
+        .desc p {
+            margin: 0;
+        }
+
+        @media screen and (max-width: 1700px) {
+            body {
+                width: 1243px;
+            }
+        }
+
+        @media screen and (max-width: 1300px) {
+            body {
+                width: 843px;
+            }
+        }
+
+        @media screen and (max-width: 850px) {
+            body {
+                width: auto;
+            }
+
+            .image {
+                width: 100%;
+                padding-top: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <h1><i>kaimono</i></h1>
+        {content}
+    </div>
+</body>
+</html>
