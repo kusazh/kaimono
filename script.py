@@ -13,7 +13,7 @@ TEMPLATE_DIV = '''<div class="item">
         </div>
         '''
 
-TARGET_IMAGE_SIZE = 500
+TARGET_IMAGE_SIZE = 400
 
 
 def genarate_content():
