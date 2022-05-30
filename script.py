@@ -19,6 +19,7 @@ TARGET_IMAGE_SIZE = 400
 def genarate_content():
     content = ''
     images = os.listdir('images')
+    images.sort()
     segment_list = []
     for name in images:
         if '|' not in name:
@@ -31,10 +32,21 @@ def genarate_content():
     return content
 
 def convert_image(name):
+    def _crop_image(img):
+        bg = Image.new(img.mode, img.size, img.getpixel((0,0)))
+        diff = ImageChops.difference(img, bg)
+        diff = ImageChops.add(diff, diff, 0.2, -100)
+        bbox = diff.getbbox()
+        if bbox:
+            return img.crop(bbox)
+
     im = Image.open('images/%s' % name)
     name = name.split('.')[0]
     out_path = 'out/images/%s.png' % name
-    im = remove(im)
+    try:
+        im = remove(im, alpha_matting=True)
+    except AssertionError:
+        im = remove(im, alpha_matting=False)
     im = _crop_image(im)
     x, y = im.size
     if x <= TARGET_IMAGE_SIZE and y <= TARGET_IMAGE_SIZE:
@@ -49,14 +61,6 @@ def convert_image(name):
         new_im = im.resize((new_x, new_y), resample=Image.LANCZOS)
         new_im.save(out_path, format='png')
     return '%s.png' % name
-
-def _crop_image(img):
-     bg = Image.new(img.mode, img.size, img.getpixel((0,0)))
-     diff = ImageChops.difference(img, bg)
-     diff = ImageChops.add(diff, diff, 0.2, -100)
-     bbox = diff.getbbox()
-     if bbox:
-         return img.crop(bbox)
 
 
 if __name__ == '__main__':
