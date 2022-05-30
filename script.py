@@ -1,12 +1,11 @@
 import os
 
-import cv2
-import numpy as np
-from PIL import Image
+from rembg import remove
+from PIL import Image, ImageChops
 
 
 TEMPLATE_DIV = '''<div class="item">
-            <img src="images/{path}">
+            <img src="images/{name}">
             <div class="desc">
                 <p>{dt}</p>
                 <p>{title}</p>
@@ -14,80 +13,50 @@ TEMPLATE_DIV = '''<div class="item">
         </div>
         '''
 
-TARGET_IMAGE_SIZE = 250
+TARGET_IMAGE_SIZE = 500
 
 
 def genarate_content():
     content = ''
     images = os.listdir('images')
     segment_list = []
-    for path in images:
-        if '|' not in path:
+    for name in images:
+        if '|' not in name:
             continue
-        path = convert_image(path)
-        dt, title = path.split('.')[0].split('|')
+        name = convert_image(name)
+        dt, title = name.split('.')[0].split('|')
         dt = dt.replace('-', '/')
         title = title.replace(':', '/')
-        content += TEMPLATE_DIV.format(path=path, dt=dt, title=title)
+        content += TEMPLATE_DIV.format(name=name, dt=dt, title=title)
     return content
 
-def convert_image(path):
-    name = path.split('.')[0]
-    im = Image.open('images/%s' % path)
+def convert_image(name):
+    im = Image.open('images/%s' % name)
+    name = name.split('.')[0]
+    out_path = 'out/images/%s.png' % name
+    im = remove(im)
+    im = _crop_image(im)
     x, y = im.size
     if x <= TARGET_IMAGE_SIZE and y <= TARGET_IMAGE_SIZE:
-        im.save('out/images/%s.png' % name, format='png')
-        path = '%s.png' % name
-    if x >= y:
-        new_x = TARGET_IMAGE_SIZE
-        new_y = y * new_x // x
+        im.save(out_path, format='png')
     else:
-        new_y = TARGET_IMAGE_SIZE
-        new_x = x * new_y // y
-    new_im = im.resize((new_x, new_y), resample=Image.LANCZOS)
-    new_im.save('out/images/%s.png' % name, format='png')
-    path = '%s.png' % name
-    if im.mode != 'RGBA':
-        segment_image(path)
-    return path
+        if x >= y:
+            new_x = TARGET_IMAGE_SIZE
+            new_y = y * new_x // x
+        else:
+            new_y = TARGET_IMAGE_SIZE
+            new_x = x * new_y // y
+        new_im = im.resize((new_x, new_y), resample=Image.LANCZOS)
+        new_im.save(out_path, format='png')
+    return '%s.png' % name
 
-def segment_image(path):
-    '''
-    refer to: https://stackoverflow.com/a/63003020
-    '''
-
-    # load image
-    img = cv2.imread('out/images/' + path)
-
-    # convert to graky
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-    # threshold input image as mask
-    mask = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY)[1]
-
-    # negate mask
-    mask = 255 - mask
-
-    # apply morphology to remove isolated extraneous noise
-    # use borderconstant of black since foreground touches the edges
-    kernel = np.ones((3,3), np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-
-    # anti-alias the mask -- blur then stretch
-    # blur alpha channel
-    mask = cv2.GaussianBlur(mask, (0,0), sigmaX=2, sigmaY=2, borderType = cv2.BORDER_DEFAULT)
-
-    # linear stretch so that 127.5 goes to 0, but 255 stays 255
-    mask = (2*(mask.astype(np.float32))-255.0).clip(0,255).astype(np.uint8)
-
-    # put mask into alpha channel
-    result = img.copy()
-    result = cv2.cvtColor(result, cv2.COLOR_BGR2BGRA)
-    result[:, :, 3] = mask
-
-    # save resulting masked image
-    cv2.imwrite('out/images/' + path, result)
+def _crop_image(img):
+     bg = Image.new(img.mode, img.size, img.getpixel((0,0)))
+     diff = ImageChops.difference(img, bg)
+     diff = ImageChops.add(diff, diff, 0.2, -100)
+     bbox = diff.getbbox()
+     if bbox:
+         return img.crop(bbox)
 
 
 if __name__ == '__main__':
